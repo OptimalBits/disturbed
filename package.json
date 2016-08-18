@@ -1,0 +1,24 @@
+{
+  "name": "disturbed",
+  "version": "1.0.0",
+  "description": "A distributed event emitter, both for client and nodejs servers",
+  "main": "index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OptimalBits/disturbed.git"
+  },
+  "keywords": [
+    "distributed",
+    "events",
+    "redis"
+  ],
+  "author": "Manuel Astudillo",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/OptimalBits/disturbed/issues"
+  },
+  "homepage": "https://github.com/OptimalBits/disturbed#readme"
+}
