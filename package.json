@@ -1,6 +1,6 @@
 {
   "name": "disturbed",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A distributed event emitter, both for client and nodejs servers",
   "main": "index.js",
   "scripts": {
@@ -20,5 +20,8 @@
   "bugs": {
     "url": "https://github.com/OptimalBits/disturbed/issues"
   },
-  "homepage": "https://github.com/OptimalBits/disturbed#readme"
+  "homepage": "https://github.com/OptimalBits/disturbed#readme",
+  "dependencies": {
+    "node-uuid": "^1.4.7"
+  }
 }

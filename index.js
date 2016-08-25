@@ -2,9 +2,12 @@
  * Distributed events library
  *
  */
+var uuid = require('node-uuid');
+
 module.exports = function(subClient, pubClient){
   var channels = {};
   var _this = this;
+  var _uuid = uuid();
 
   this.on = function(evt, handler){
     channels[evt] = channels[evt] || [];
@@ -36,8 +39,17 @@ module.exports = function(subClient, pubClient){
 
   this.emit = function(evt){
     var args = Array.prototype.slice.call(arguments);
-    args.shift();
+    args[0] = _uuid;
+
+    // Emit to other nodes
     pubClient.publish(evt, JSON.stringify(args));
+
+    // Emit to this one
+    var handlers = channels[channel];
+    if(handlers){
+      args.shift();
+      fireEvent(handlers, args);
+    }
   }
 
   function findHandler(handlers, handler){
@@ -75,7 +87,9 @@ module.exports = function(subClient, pubClient){
         console.error('Parsing event message', err);
       }
 
-      fireEvent(handlers, args);
+      if(args[0] !== _uuid){
+        fireEvent(handlers, args);
+      }
     }
   });
 
