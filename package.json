@@ -23,5 +23,12 @@
   "homepage": "https://github.com/OptimalBits/disturbed#readme",
   "dependencies": {
     "node-uuid": "^1.4.7"
+  },
+  "devDependencies": {
+    "bluebird": "^3.4.3",
+    "chai": "^3.5.0",
+    "ioredis": "^2.3.0",
+    "mocha": "^3.0.2",
+    "redis": "^2.6.2"
   }
 }

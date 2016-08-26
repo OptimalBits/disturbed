@@ -4,7 +4,7 @@
  */
 var uuid = require('node-uuid');
 
-module.exports = function(subClient, pubClient){
+module.exports = function(pubClient, subClient){
   var channels = {};
   var _this = this;
   var _uuid = uuid();
@@ -26,7 +26,7 @@ module.exports = function(subClient, pubClient){
   this.off = function(evt, handler){
     if(channels[evt]){
       var handlers = channels[evt];
-      var index = findHandler(handler, handler);
+      var index = findHandler(handlers, handler);
       if(index !== -1){
         handlers.splice(index, 1);
       }
@@ -45,7 +45,7 @@ module.exports = function(subClient, pubClient){
     pubClient.publish(evt, JSON.stringify(args));
 
     // Emit to this one
-    var handlers = channels[channel];
+    var handlers = channels[evt];
     if(handlers){
       args.shift();
       fireEvent(handlers, args);
@@ -53,9 +53,9 @@ module.exports = function(subClient, pubClient){
   }
 
   function findHandler(handlers, handler){
-    for(var i=0; i<handlers.lenght; i++){
-      var _handler = handler[i];
-      if(_handler === handler || _handler.__handler == handler){
+    for(var i=0; i<handlers.length; i++){
+      var _handler = handlers[i];
+      if( (_handler === handler) || (_handler.__handler == handler)){
         return i;
       }
     }
@@ -93,4 +93,5 @@ module.exports = function(subClient, pubClient){
     }
   });
 
+  return this;
 }
