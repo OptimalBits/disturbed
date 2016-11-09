@@ -1,93 +1,22 @@
 /**
  * Distributed events library
- *
  */
 var uuid = require('node-uuid');
+var util = require('util');
+var EventEmitter = require('events');
 
-module.exports = function(pubClient, subClient){
-  var channels = {};
+var Emitter = function(pubClient, subClient){
   var _this = this;
-  var _uuid = uuid();
+  EventEmitter.call(this);
 
-  this.on = function(evt, handler){
-    channels[evt] = channels[evt] || [];
-    channels[evt].push(handler);
-  }
-
-  this.once = function(evt, handler){
-    function wrapper() {
-      _this.off(evt, wrapper);
-      handler.apply(this, arguments);
-    }
-    wrapper.__handler = handler;
-    return _this.on(evt, wrapper);
-  }
-
-  this.off = function(evt, handler){
-    if(channels[evt]){
-      var handlers = channels[evt];
-      var index = findHandler(handlers, handler);
-      if(index !== -1){
-        handlers.splice(index, 1);
-      }
-      if(handlers.length === 0){
-        delete channels[evt];
-        subClient.unsubscribe(evt);
-      }
-    }
-  }
-
-  this.emit = function(evt){
-    var args = Array.prototype.slice.call(arguments);
-    args[0] = _uuid;
-
-    // Emit to this one
-    var handlers = channels[evt];
-    if(handlers){
-      args.shift();
-      fireEvent(handlers, args);
-    }
-
-    // Emit to other nodes
-    return new Promise(function(resolve, reject){
-      pubClient.publish(evt, JSON.stringify(args), function(err){
-        if(err){
-          reject(err);
-        }else{
-          resolve();
-        }
-      });
-    });
-  }
-
-  function findHandler(handlers, handler){
-    for(var i=0; i<handlers.length; i++){
-      var _handler = handlers[i];
-      if( (_handler === handler) || (_handler.__handler == handler)){
-        return i;
-      }
-    }
-    return -1;
-  }
-
-  function fireEvent(handlers, args){
-    var _handlers = [], i, len = handlers.length;
-
-    //
-    // Copy the handlers since we could remove listeners when firing
-    // events.
-    //
-    for(i=0; i<len; i++){
-      _handlers[i] = handlers[i];
-    }
-    for(i=0; i < len; i++) {
-      _handlers[i].apply(this, args);
-    }
-  }
+  this.uuid = uuid();
+  this.pubClient = pubClient;
+  this.subClient = subClient;
 
   subClient.on('message', function(channel, msg){
-    var handlers = channels[channel];
-    if(handlers){
+
+    var count = _this.listenerCount(channel);
+    if(count){
       var args;
       try{
         args = JSON.parse(msg);
@@ -95,11 +24,60 @@ module.exports = function(pubClient, subClient){
         console.error('Parsing event message', err);
       }
 
-      if(args[0] !== _uuid){
-        fireEvent(handlers, args);
+      if(args[0] !== _this.uuid){
+        args[0] = channel;
+        _this.emit.apply(_this, args);
       }
     }
   });
-
-  return this;
 }
+
+util.inherits(Emitter, EventEmitter);
+
+Emitter.prototype.on = function(){
+  var _this = this;
+  var args = Array.prototype.slice.call(arguments);
+  EventEmitter.prototype.on.apply(this, args);
+
+  return new Promise(function(resolve, reject){
+    _this.subClient.subscribe(args[0], function(err){
+      if(err){
+        reject(err);
+      }else{
+        resolve();
+      }
+    });
+  })
+}
+
+Emitter.prototype.distEmit = function(evt){
+  var _this = this;
+  var args = Array.prototype.slice.call(arguments);
+  this.emit.apply(this, args);
+
+  args[0] = this.uuid;
+
+  // Emit to other nodes
+  return new Promise(function(resolve, reject){
+    _this.pubClient.publish(evt, JSON.stringify(args), function(err){
+      if(err){
+        reject(err);
+      }else{
+        resolve();
+      }
+    });
+  });
+}
+
+Emitter.prototype.off = Emitter.prototype.removeListener = function(evt){
+  var _this = this;
+  var args = Array.prototype.slice.call(arguments);
+  EventEmitter.prototype.removeListener.apply(this, args);
+
+  if(!_this.listenerCount(evt)){
+    _this.subClient.unsubscribe(evt);
+  }
+}
+
+module.exports = Emitter;
+
