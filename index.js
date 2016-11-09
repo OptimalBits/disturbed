@@ -41,15 +41,23 @@ module.exports = function(pubClient, subClient){
     var args = Array.prototype.slice.call(arguments);
     args[0] = _uuid;
 
-    // Emit to other nodes
-    pubClient.publish(evt, JSON.stringify(args));
-
     // Emit to this one
     var handlers = channels[evt];
     if(handlers){
       args.shift();
       fireEvent(handlers, args);
     }
+
+    // Emit to other nodes
+    return new Promise(function(resolve, reject){
+      pubClient.publish(evt, JSON.stringify(args), function(err){
+        if(err){
+          reject(err);
+        }else{
+          resolve();
+        }
+      });
+    });
   }
 
   function findHandler(handlers, handler){
