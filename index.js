@@ -5,7 +5,7 @@ var uuid = require('node-uuid');
 var util = require('util');
 var EventEmitter = require('events');
 
-var Emitter = function(pubClient, subClient){
+var Emitter = function (pubClient, subClient) {
   var _this = this;
   EventEmitter.call(this);
 
@@ -13,18 +13,18 @@ var Emitter = function(pubClient, subClient){
   this.pubClient = pubClient;
   this.subClient = subClient;
 
-  subClient.on('message', function(channel, msg){
+  subClient.on('message', function (channel, msg) {
 
     var count = _this.listenerCount(channel);
-    if(count){
+    if (count) {
       var args;
-      try{
+      try {
         args = JSON.parse(msg);
-      }catch(err){
+      } catch (err) {
         console.error('Parsing event message', err);
       }
 
-      if(args[0] !== _this.uuid){
+      if (args[0] !== _this.uuid) {
         args[0] = channel;
         _this.emit.apply(_this, args);
       }
@@ -34,23 +34,25 @@ var Emitter = function(pubClient, subClient){
 
 util.inherits(Emitter, EventEmitter);
 
-Emitter.prototype.on = function(){
+Emitter.prototype.on = function (evt, listener, isGlobal) {
   var _this = this;
   var args = Array.prototype.slice.call(arguments);
   EventEmitter.prototype.on.apply(this, args);
 
-  return new Promise(function(resolve, reject){
-    _this.subClient.subscribe(args[0], function(err){
-      if(err){
-        reject(err);
-      }else{
-        resolve();
-      }
-    });
-  })
+  if (isGlobal) {
+    return new Promise(function (resolve, reject) {
+      _this.subClient.subscribe(args[0], function (err) {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
+        }
+      });
+    })
+  }
 }
 
-Emitter.prototype.distEmit = function(evt){
+Emitter.prototype.distEmit = function (evt) {
   var _this = this;
   var args = Array.prototype.slice.call(arguments);
   this.emit.apply(this, args);
@@ -58,23 +60,24 @@ Emitter.prototype.distEmit = function(evt){
   args[0] = this.uuid;
 
   // Emit to other nodes
-  return new Promise(function(resolve, reject){
-    _this.pubClient.publish(evt, JSON.stringify(args), function(err){
-      if(err){
+  return new Promise(function (resolve, reject) {
+    _this.pubClient.publish(evt, JSON.stringify(args), function (err) {
+      if (err) {
         reject(err);
-      }else{
+      } else {
         resolve();
       }
     });
   });
 }
 
-Emitter.prototype.off = Emitter.prototype.removeListener = function(evt){
+Emitter.prototype.off = Emitter.prototype.removeListener = function (evt, listener) {
   var _this = this;
   var args = Array.prototype.slice.call(arguments);
   EventEmitter.prototype.removeListener.apply(this, args);
 
-  if(!_this.listenerCount(evt)){
+  // TODO: we should take into consideration isGlobal.
+  if (!_this.listenerCount(evt)) {
     _this.subClient.unsubscribe(evt);
   }
 }
