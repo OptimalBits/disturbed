@@ -1,6 +1,6 @@
 {
   "name": "disturbed",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "description": "A distributed event emitter, both for client and nodejs servers",
   "main": "index.js",
   "scripts": {
