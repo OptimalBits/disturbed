@@ -34,6 +34,8 @@ var Emitter = function (pubClient, subClient) {
 
 util.inherits(Emitter, EventEmitter);
 
+// KLUDGE, it is not possible to listen local and global for the same event in
+// different parts of the code.
 Emitter.prototype.on = function (evt, listener, isGlobal) {
   var _this = this;
   var args = Array.prototype.slice.call(arguments);
@@ -50,6 +52,7 @@ Emitter.prototype.on = function (evt, listener, isGlobal) {
       });
     })
   }
+  return Promise.resolve(void 0);
 }
 
 Emitter.prototype.distEmit = function (evt) {
