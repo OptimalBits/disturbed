@@ -1,7 +1,7 @@
 /**
  * Distributed events library
  */
-var uuid = require('node-uuid');
+var uuid = require('uuid');
 var util = require('util');
 var EventEmitter = require('events');
 
