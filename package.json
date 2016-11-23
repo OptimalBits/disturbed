@@ -22,7 +22,7 @@
   },
   "homepage": "https://github.com/OptimalBits/disturbed#readme",
   "dependencies": {
-    "node-uuid": "^1.4.7"
+    "uuid": "^3.0.0"
   },
   "devDependencies": {
     "bluebird": "^3.4.3",
